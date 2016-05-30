@@ -59,7 +59,7 @@ try {
     Daemon::configure([
         'appVersion'        => APP_VERSION,
         'appDir'            => APP_ROOT,
-        'appDescription'    => 'ALICE websocket server.',
+        'appDescription'    => 'ALICE Smart Home Sensor',
         'appNamespace'      => 'Alice',
         'appName'           => 'Sensor',
         'authorName'        => 'Tim Gunter',

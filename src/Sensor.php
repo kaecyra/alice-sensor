@@ -13,7 +13,9 @@ use Alice\Daemon\Daemon;
 use Alice\Common\Config;
 use Alice\Common\Event;
 
-use Exception;
+use Alice\Sensor\MotionClient;
+
+use React\EventLoop\Factory as LoopFactory;
 
 /**
  * ALICE Websocket Daemon
@@ -28,6 +30,12 @@ class Sensor implements App {
      * @var \Alice\Common\Config
      */
     protected $config;
+
+    /**
+     * Socket Client
+     * @var \Alice\Client\SocketClient
+     */
+    protected $client;
 
     /**
      * Loop
@@ -53,9 +61,9 @@ class Sensor implements App {
     }
 
     /**
-     * Get Alice Server reference
+     * Get ALICE Sensor reference
      *
-     * @return \Alice\Alice
+     * @return \Alice\Sensor
      */
     public static function go() {
         return self::$sensor;
@@ -82,49 +90,27 @@ class Sensor implements App {
         // Start the loop
         self::$loop = LoopFactory::create();
 
-        // Prepare Aggregator
-        $this->aggregator = new Aggregator;
-
-        $client = $this->config->get('data.client');
-        $this->aggregator->setClientConfiguration($client);
-
-        // Add sources to aggregator
-        rec(' adding data sources');
-        foreach ($this->config->get('data.sources') as $source) {
-            $sourceType = val('type', $source);
-            if (!$sourceType) {
-                rec('  skipped source with no type');
-                continue;
-            }
-
-            $dataSource = Aggregator::loadSource($sourceType, $source);
-            if (!$dataSource) {
-                rec("  unknown data source: {$sourceType}");
-                continue;
-            }
-
-            $this->aggregator->addSource($dataSource);
-            rec("  added source: ".$dataSource->getID());
-        }
-
         Event::fire('startup');
 
-        rec(' starting listeners');
+        rec(' starting client');
+
+        // Start client
+
+        $connectionRetry = $this->config->get('server.retry.delay');
 
         // Run the server application
-        $this->sockets = new SocketDispatcher($this->config->get('server.host'), $this->config->get('server.port'), $this->config->get('server.address'), self::$loop);
-        $ran = $this->sockets->run();
+        $this->client = new MotionClient();
+        $ran = $this->client->run($connectionRetry);
 
-        rec(' listeners closed');
+        rec(' client closed');
         rec($ran);
     }
 
     /**
-     * Get aggregator
      *
-     * @return Alice\Data\Aggregator
+     * @return \Alice\Common\Config
      */
-    public function aggregator() {
-        return $this->aggregator;
+    public function config() {
+        return $this->config;
     }
 }
