@@ -25,6 +25,11 @@ class MotionClient extends SocketClient {
     const SENSOR_STILL = 'still';
 
     /**
+     * How often to send unchanged sensor data
+     */
+    const SENSOR_DUPLICATE_UPDATE = 10;
+
+    /**
      * GPIO pin
      * @var integer
      */
@@ -41,6 +46,12 @@ class MotionClient extends SocketClient {
      * @var string
      */
     protected $last;
+
+    /**
+     * Last sensor update sent
+     * @var integer
+     */
+    protected $lastUpdate;
 
     /**
      * Construct
@@ -100,9 +111,12 @@ class MotionClient extends SocketClient {
         $sense = (boolean)trim($this->gpio->input($this->pin));
         $sensorState = $sense ? self::SENSOR_MOTION : self::SENSOR_STILL;
 
-        if ($sensorState != $this->last) {
-            $this->rec("sensed new state: {$sensorState}");
-            $this->last = $sensorState;
+        if ($sensorState != $this->last || (time() - $this->lastUpdate) >= self::SENSOR_DUPLICATE_UPDATE) {
+            $this->lastUpdate = time();
+            if ($sensorState != $this->last) {
+                $this->rec("sensed new state: {$sensorState}");
+                $this->last = $sensorState;
+            }
             $this->sendMessage('sensor', $sensorState);
         }
     }
