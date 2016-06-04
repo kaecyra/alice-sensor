@@ -2,7 +2,9 @@
     "server": {
         "mode": "ws",
         "host": "localhost",
+        "address": "127.0.0.1",
         "port": 8080,
+        "path": "/sensor",
         "retry": {
             "delay": 15
         }
@@ -11,10 +13,7 @@
         "type": "motion",
         "id": "lrmirror01-motion",
         "name": "Livingroom Mirror Motion",
-        "server": {
-            "path": "/sensor"
-        },
-         "settings": {
+        "settings": {
             "gpio": {
                 "pin": 4
             }
