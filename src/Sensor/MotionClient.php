@@ -118,7 +118,12 @@ class MotionClient extends SocketClient {
                 $this->rec("sensed new state: {$sensorState}");
                 $this->last = $sensorState;
             }
-            $this->sendMessage('sensor', $sensorState);
+            $this->sendMessage('sensor', [
+                "sensor" => $sensorState,
+                "extra" => [
+                    "display" => ($this->isAwake()) ? 'on' : 'off'
+                ]
+            ]);
         }
     }
 
@@ -128,9 +133,16 @@ class MotionClient extends SocketClient {
      * @param SocketMessage $message
      */
     public function message_hibernate(SocketMessage $message) {
-        if (!$this->isHibernating()) {
+        if ($this->isAwake()) {
             $this->rec("hibernating screen");
             exec('/usr/bin/tvservice -o');
+
+            // Update display mode on client
+            $this->sendMessage('sensor', [
+                "extra" => [
+                    "display" => 'off'
+                ]
+            ]);
         }
     }
 
@@ -140,9 +152,16 @@ class MotionClient extends SocketClient {
      * @param SocketMessage $message
      */
     public function message_unhibernate(SocketMessage $message) {
-        if ($this->isHibernating()) {
+        if (!$this->isAwake()) {
             $this->rec("unhibernating screen");
             exec('/usr/bin/tvservice -p');
+
+            // Update display mode on client
+            $this->sendMessage('sensor', [
+                "extra" => [
+                    "display" => 'on'
+                ]
+            ]);
         }
     }
 
@@ -150,13 +169,13 @@ class MotionClient extends SocketClient {
      * Test if display is off
      *
      */
-    public function isHibernating() {
+    public function isAwake() {
         exec('/usr/bin/tvservice -s', $out);
         $out = strtolower(trim(implode('', $out)));
         if (preg_match('`tv is off`', $out)) {
-            return true;
+            return false;
         }
-        return false;
+        return true;
     }
 
 }

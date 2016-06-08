@@ -65,18 +65,18 @@ try {
         'authorName'        => 'Tim Gunter',
         'authorEmail'       => 'tim@vanillaforums.com',
         'appConcurrent'     => false,
-        'appLogLevel'       => Daemon::LOG_L_ALL,
+        'appLogLevel'       => Daemon::LOG_L_APP,
         'appLogFile'        => 'log/sensor.log',
         //'sysRunAsGroup'     => 'root',
         //'sysRunAsUser'      => 'root',
         'sysMode'           => Daemon::MODE_SINGLE,
-        'sysDaemonize'      => false
+        'sysDaemonize'      => true
     ]);
 
     $exitCode = Daemon::start($argv);
 
 } catch (\Alice\Daemon\Exception $ex) {
-    
+
     $msgOptions = 0;
 
     $exceptionCode = $ex->getCode();
