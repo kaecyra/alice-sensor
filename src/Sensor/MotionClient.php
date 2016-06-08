@@ -128,18 +128,35 @@ class MotionClient extends SocketClient {
      * @param SocketMessage $message
      */
     public function message_hibernate(SocketMessage $message) {
-        $this->rec("hibernating screen");
-        exec('/usr/bin/tvservice -o');
+        if (!$this->isHibernating()) {
+            $this->rec("hibernating screen");
+            exec('/usr/bin/tvservice -o');
+        }
     }
 
     /**
      * Handle screen unhibernate message
-     * 
+     *
      * @param SocketMessage $message
      */
     public function message_unhibernate(SocketMessage $message) {
-        $this->rec("unhibernating screen");
-        exec('/usr/bin/tvservice -p');
+        if ($this->isHibernating()) {
+            $this->rec("unhibernating screen");
+            exec('/usr/bin/tvservice -p');
+        }
+    }
+
+    /**
+     * Test if display is off
+     *
+     */
+    public function isHibernating() {
+        exec('/usr/bin/tvservice -s', $out);
+        $out = strtolower(trim(implode('', $out)));
+        if (preg_match('`tv is off`', $out)) {
+            return true;
+        }
+        return false;
     }
 
 }
