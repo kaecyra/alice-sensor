@@ -10,6 +10,7 @@ namespace Alice\Sensor;
 use Alice\Sensor;
 
 use Alice\Client\SocketClient;
+use Alice\Socket\SocketMessage;
 
 use PhpGpio\Gpio;
 
@@ -119,6 +120,26 @@ class MotionClient extends SocketClient {
             }
             $this->sendMessage('sensor', $sensorState);
         }
+    }
+
+    /**
+     * Handle screen hibernate message
+     *
+     * @param SocketMessage $message
+     */
+    public function message_hibernate(SocketMessage $message) {
+        $this->rec("hibernating screen");
+        exec('/usr/bin/tvservice -o');
+    }
+
+    /**
+     * Handle screen unhibernate message
+     * 
+     * @param SocketMessage $message
+     */
+    public function message_unhibernate(SocketMessage $message) {
+        $this->rec("unhibernating screen");
+        exec('/usr/bin/tvservice -p');
     }
 
 }
