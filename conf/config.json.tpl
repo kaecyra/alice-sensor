@@ -16,7 +16,12 @@
         "settings": {
             "gpio": {
                 "pin": 4
-            }
+            },
+            "extensions": [
+                {
+                    "type": "screen"
+                }
+            ]
         }
     }
 }
