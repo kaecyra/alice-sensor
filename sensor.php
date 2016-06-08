@@ -76,6 +76,8 @@ try {
     $exitCode = Daemon::start($argv);
 
 } catch (\Alice\Daemon\Exception $ex) {
+    
+    $msgOptions = 0;
 
     $exceptionCode = $ex->getCode();
     if ($exceptionCode != 200) {
