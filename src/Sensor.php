@@ -18,7 +18,7 @@ use Alice\Sensor\MotionClient;
 use React\EventLoop\Factory as LoopFactory;
 
 /**
- * ALICE Websocket Daemon
+ * ALICE Sensor Daemon
  *
  * @author Tim Gunter <tim@vanillaforums.com>
  * @package alice-sensor
@@ -33,7 +33,7 @@ class Sensor implements App {
 
     /**
      * Socket Client
-     * @var \Alice\Client\SocketClient
+     * @var \Alice\Socket\SocketClient
      */
     protected $client;
 

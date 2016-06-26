@@ -59,7 +59,7 @@ try {
     Daemon::configure([
         'appVersion'        => APP_VERSION,
         'appDir'            => APP_ROOT,
-        'appDescription'    => 'ALICE Smart Home Sensor',
+        'appDescription'    => 'ALICE Smart Home Sensor client',
         'appNamespace'      => 'Alice',
         'appName'           => 'Sensor',
         'authorName'        => 'Tim Gunter',

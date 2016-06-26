@@ -7,15 +7,13 @@
 
 namespace Alice\Sensor;
 
-use Alice\Sensor;
-
-use Alice\Client\SocketClient;
+use Alice\Socket\SocketClient;
 use Alice\Socket\SocketMessage;
 
 use PhpGpio\Gpio;
 
 /**
- * ALICE Sensor Socket Client
+ * ALICE Sensor Client
  *
  * @author Tim Gunter <tim@vanillaforums.com>
  * @package alice-sensor
@@ -60,6 +58,8 @@ class MotionClient extends SocketClient {
      */
     public function __construct() {
         parent::__construct();
+        $this->settings = Sensor::go()->config()->get('sensor');
+        $this->server = Sensor::go()->config()->get('server');
         $this->prepareGPIO();
     }
 
@@ -168,6 +168,7 @@ class MotionClient extends SocketClient {
     /**
      * Test if display is off
      *
+     * @return boolean
      */
     public function isAwake() {
         exec('/usr/bin/tvservice -s', $out);

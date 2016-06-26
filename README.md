@@ -1,3 +1,3 @@
-# ALICE Smart Home Sensor
+# ALICE Smart Home Sensor client
 
-This repository contains an daemon that can interact with various hardware sensors and connect to the ALICE server to push updates to connected devices.
+This repository contains a daemon that can interact with various hardware sensors and connect to the ALICE server to push updates to connected devices.
