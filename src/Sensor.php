@@ -100,7 +100,7 @@ class Sensor implements App {
 
         // Run the server application
         $this->client = new MotionClient();
-        $ran = $this->client->run($connectionRetry);
+        $ran = $this->client->run(self::$loop, $connectionRetry);
 
         rec(' client closed');
         rec($ran);
