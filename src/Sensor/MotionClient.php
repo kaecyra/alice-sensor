@@ -7,7 +7,7 @@
 
 namespace Alice\Sensor;
 
-use Alice\Sensor\Sensor;
+use Alice\Sensor;
 
 use Alice\Socket\SocketClient;
 use Alice\Socket\SocketMessage;
