@@ -35,6 +35,14 @@
             "id": "audio-input01",
             "name": "Livingroom Audio Input",
             "settings": {
+                "record": {
+                    "rate": "16k",
+                    "silence": {
+                        "top": 0.1,
+                        "bottom": 2.0,
+                        "pad": 5
+                    }
+                },
                 "extensions": [
                     {
                         "type": "microphone"

@@ -158,7 +158,6 @@ class Sensor implements App {
                 break;
         }
 
-        rec(' run');
         $ran = $this->client->run(self::$loop, $connectionRetry);
 
         rec(' client closed');
