@@ -7,6 +7,8 @@
 
 namespace Alice;
 
+use Garden\Cli\Cli;
+
 use Alice\Daemon\App;
 use Alice\Daemon\Daemon;
 
@@ -14,6 +16,7 @@ use Alice\Common\Config;
 use Alice\Common\Event;
 
 use Alice\Sensor\MotionClient;
+use Alice\Audio\AudioClient;
 
 use React\EventLoop\Factory as LoopFactory;
 
@@ -38,6 +41,12 @@ class Sensor implements App {
     protected $client;
 
     /**
+     * List of sensors
+     * @var array
+     */
+    protected $sensors;
+
+    /**
      * Loop
      * @var \React\EventLoop\LoopInterface
      */
@@ -58,6 +67,24 @@ class Sensor implements App {
         // Config
         rec(' reading config');
         $this->config = Config::file(paths($appDir, 'conf/config.json'), true);
+
+        // Read sensor list
+        $this->sensors = [];
+        $sensors = $this->config->get('sensors');
+        foreach ($sensors as $sensor) {
+            $id = $sensor['id'];
+            $this->sensors[$id] = $sensor;
+        }
+    }
+
+    /**
+     * Extend CLI
+     *
+     * @param Cli $cli
+     */
+    public static function commands($cli) {
+        $cli->command('start')
+            ->opt('id', "Sensor ID", true, 'string');
     }
 
     /**
@@ -87,6 +114,23 @@ class Sensor implements App {
 
         rec(' startup');
 
+        // Lookup sensor
+        $args = Daemon::getArgs();
+        $id = $args->getOpt('id');
+
+        if (!array_key_exists($id, $this->sensors)) {
+            rec("  no such sensor: {$id}");
+            return Daemon::APP_EXIT_EXIT;
+        }
+        $sensor = $this->sensors[$id];
+        rec("  sensor: {$id} ({$sensor['name']})");
+
+        // Adjust daemon log file
+        Daemon::openLog("log/{$id}.log");
+
+        // Startup again
+        rec(' startup');
+
         // Start the loop
         self::$loop = LoopFactory::create();
 
@@ -99,7 +143,22 @@ class Sensor implements App {
         $connectionRetry = $this->config->get('server.retry.delay');
 
         // Run the server application
-        $this->client = new MotionClient();
+        switch ($sensor['type']) {
+            case 'motion':
+                $this->client = new MotionClient($sensor);
+                break;
+
+            case 'audio':
+                $this->client = new AudioClient($sensor);
+                break;
+
+            default:
+                rec("  unsupported sensor type: {$sensor['type']}");
+                return Daemon::APP_EXIT_EXIT;
+                break;
+        }
+
+        rec(' run');
         $ran = $this->client->run(self::$loop, $connectionRetry);
 
         rec(' client closed');

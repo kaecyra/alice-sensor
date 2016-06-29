@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "12928f29d2d6267fe4c453e6bb90172a",
-    "content-hash": "17b62b0d5d7fe54024312eca754a1f3b",
+    "hash": "796823accde5bfc803d792dfc9c105bb",
+    "content-hash": "70024b110e87fe392058e91473af0f62",
     "packages": [
         {
             "name": "evenement/evenement",
@@ -55,16 +55,16 @@
         },
         {
             "name": "guzzlehttp/psr7",
-            "version": "1.3.0",
+            "version": "1.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/psr7.git",
-                "reference": "31382fef2889136415751badebbd1cb022a4ed72"
+                "reference": "5c6447c9df362e8f8093bda8f5d8873fe5c7f65b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/psr7/zipball/31382fef2889136415751badebbd1cb022a4ed72",
-                "reference": "31382fef2889136415751badebbd1cb022a4ed72",
+                "url": "https://api.github.com/repos/guzzle/psr7/zipball/5c6447c9df362e8f8093bda8f5d8873fe5c7f65b",
+                "reference": "5c6447c9df362e8f8093bda8f5d8873fe5c7f65b",
                 "shasum": ""
             },
             "require": {
@@ -80,7 +80,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.0-dev"
+                    "dev-master": "1.4-dev"
                 }
             },
             "autoload": {
@@ -109,7 +109,7 @@
                 "stream",
                 "uri"
             ],
-            "time": "2016-04-13 19:56:01"
+            "time": "2016-06-24 23:00:38"
         },
         {
             "name": "kaecyra/alice-common",
@@ -117,7 +117,7 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/kaecyra/alice-common",
-                "reference": "3e98cb6ba519b848bd150136db7bb182339dcba3"
+                "reference": "0a8fc75e71ba06ee09cd99c58983c23f29dd46af"
             },
             "require": {
                 "php": ">=5.5",
@@ -152,7 +152,7 @@
                 "smart",
                 "smartmirror"
             ],
-            "time": "2016-05-30 02:12:52"
+            "time": "2016-06-29 02:30:58"
         },
         {
             "name": "psr/http-message",
@@ -588,6 +588,51 @@
                 "stream"
             ],
             "time": "2015-10-07 18:32:58"
+        },
+        {
+            "name": "react/zmq",
+            "version": "v0.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/reactphp/zmq.git",
+                "reference": "2865e3b23000751ed443d3f108da2735abf80716"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/reactphp/zmq/zipball/2865e3b23000751ed443d3f108da2735abf80716",
+                "reference": "2865e3b23000751ed443d3f108da2735abf80716",
+                "shasum": ""
+            },
+            "require": {
+                "evenement/evenement": "~2.0",
+                "ext-zmq": "*",
+                "php": ">=5.4.0",
+                "react/event-loop": "0.4.*"
+            },
+            "require-dev": {
+                "ext-pcntl": "*"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "0.4-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "React\\ZMQ": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "ZeroMQ bindings for React.",
+            "keywords": [
+                "zeromq",
+                "zmq"
+            ],
+            "time": "2014-05-25 17:54:51"
         },
         {
             "name": "ronanguilloux/php-gpio",

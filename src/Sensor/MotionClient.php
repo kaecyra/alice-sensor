@@ -58,9 +58,9 @@ class MotionClient extends SocketClient {
      * Construct
      *
      */
-    public function __construct() {
+    public function __construct($settings) {
         parent::__construct();
-        $this->settings = Sensor::go()->config()->get('sensor');
+        $this->settings = $settings;
         $this->server = Sensor::go()->config()->get('server');
         $this->prepareGPIO();
     }
@@ -85,8 +85,7 @@ class MotionClient extends SocketClient {
      */
     public function registerClient() {
         $this->rec("registering client");
-        $sensor = Sensor::go()->config()->get('sensor');
-        $this->sendMessage('register', $sensor);
+        $this->sendMessage('register', $this->settings);
     }
 
     /**
