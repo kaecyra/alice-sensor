@@ -16,7 +16,7 @@ use Alice\Common\Config;
 use Alice\Common\Event;
 
 use Alice\Sensor\MotionClient;
-use Alice\Audio\AudioClient;
+use Alice\Sensor\AudioClient;
 
 use React\EventLoop\Factory as LoopFactory;
 

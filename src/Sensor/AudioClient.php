@@ -5,7 +5,7 @@
  * @copyright 2016 Tim Gunter
  */
 
-namespace Alice\Audio;
+namespace Alice\Sensor;
 
 use Alice\Sensor;
 
@@ -21,6 +21,9 @@ use \ZMQ;
  * @package alice-sensor
  */
 class AudioClient extends SocketClient {
+
+    const FORMAT = 'wav';
+    const MIMETYPE = 'audio/wav';
 
     /**
      * Sound asset path
@@ -53,6 +56,12 @@ class AudioClient extends SocketClient {
     protected $listening;
 
     /**
+     *
+     * @var \SPLQueue
+     */
+    protected $queue;
+
+    /**
      * Construct
      *
      */
@@ -62,7 +71,9 @@ class AudioClient extends SocketClient {
         $this->server = Sensor::go()->config()->get('server');
         $this->assetPath = paths(\Alice\Daemon\Daemon::option('appDir'), 'assets');
 
+        $this->queue = new \SplQueue();
         $this->listening = false;
+        $this->tickFreq = 0.5;
 
         try {
             $this->rec("binding zero socket");
@@ -122,6 +133,16 @@ class AudioClient extends SocketClient {
         }
 
         // Do our stuff here
+        if ($this->queue->count()) {
+            $task = $this->queue->pop();
+            $action = $task[0];
+            $payload = val(1, $task, []);
+
+            $method = "action_{$action}";
+            if (method_exists($this, $method)) {
+                $this->$method($payload);
+            }
+        }
 
     }
 
@@ -175,7 +196,7 @@ class AudioClient extends SocketClient {
     }
 
     /**
-     * Listen for audio command
+     * Begin listening cycle
      *
      */
     public function listen() {
@@ -187,18 +208,33 @@ class AudioClient extends SocketClient {
 
         $this->rec('listening');
 
-        // Acknowledge keyphrase
-        $this->rec(' send wake cue');
-        $this->sendMessage('event', [
-            'type' => 'cue'
-        ]);
+        $this->queue('normalize');
+    }
 
+    /**
+     * Add job to queue
+     *
+     * @param string $action
+     * @param array $payload
+     */
+    public function queue($action, $payload = []) {
+        $this->queue->push([$action, $payload]);
+    }
+
+    /**
+     * Detect ambient noise level
+     *
+     * @param array $payload
+     */
+    public function action_normalize($payload) {
         // Sense audio level
         // rec -n stat trim 0 .25 2>&1
         $this->rec(' measure ambient noise');
+        $output = [];
         exec('rec -n stat trim 0 .25 2>&1', $output);
         $stat = [];
         foreach ($output as $outline) {
+            $matches = [];
             if (preg_match('`^([\w \(\)]+):\s+([\w\d \.-]+)$`', $outline, $matches)) {
                 $label = strtolower($matches[1]);
                 $label = str_replace(' ','',trim($label));
@@ -207,38 +243,146 @@ class AudioClient extends SocketClient {
         }
         $meanRMS = $stat['rmsamplitude'];
         $detectedSilencePercent = round(($meanRMS / 1) * 100, 0);
-        $silencePadding = valr('record.silence.pad', $this->settings, 5);
+        $silencePadding = valr('settings.record.silence.pad', $this->settings, 5);
         $silencePercent = $detectedSilencePercent + $silencePadding;
-        $this->rec(" silence at: {$silencePercent}%");
+        $this->rec(" silence at: {$silencePercent}% (boosted by {$silencePadding})");
 
-        // Record audio
-        $recRate = valr('record.rate', $this->settings, '16k');
-        $recSilenceTop = valr('record.silence.top', $this->settings, '0.1');
-        $recSilenceBottom = valr('record.silence.top', $this->settings, '2.0');
+        $this->queue('cue', [
+            'floor' => $silencePercent
+        ]);
+    }
 
-        // rec /tmp/recording.flac rate 16k silence 1 0.1 3% 1 3.0 3%
-        $recID = uniqid('record');
-        $recPath = "/tmp/{$recID}.flac";
-        unlink($recPath);
-        $command = ['rec'];
-        $command[] = $recPath;
-        $command[] = "rate {$recRate}";
-        $command[] = "silence 1 {$recSilenceTop} {$silencePercent}% 1 {$recSilenceBottom} {$silencePercent}%";
-        $execCommand = implode(' ', $command);
-        exec($execCommand, $output);
+    /**
+     * Send cue to ALICE
+     *
+     * @param array $payload
+     */
+    public function action_cue($payload) {
+        // Acknowledge keyphrase
+        $this->rec(' send wake cue');
+        $this->sendMessage('event', [
+            'type' => 'cue'
+        ]);
 
-        // Recognize audio
+        $this->queue('listen', $payload);
+    }
+
+    /**
+     * Listen and record audio
+     *
+     * @param array $payload
+     */
+    public function action_listen($payload) {
+
+        // TEMPORARY
+
+        $f = '/tmp/record57748e4581566.wav';
+
+        $this->listening = false;
+
+        // Send uncue to ALICE
         $this->sendMessage('event', [
             'type' => 'uncue'
         ]);
 
-        $phrase = 'test phrase';
+        $this->queue('recognize', [
+            'path' => $f
+        ]);
+
+        return;
+
+        // Record audio
+        $recRate = valr('settings.record.rate', $this->settings, '16k');
+        $recSilenceTop = valr('settings.record.silence.top', $this->settings, '0.1');
+        $recSilenceBottom = valr('settings.record.silence.bottom', $this->settings, '2.0');
+
+        $silencePercent = $payload['floor'];
+
+        // rec /tmp/recording.flac rate 16k silence 1 0.1 3% 1 3.0 3%
+        $recID = uniqid('record');
+        $recPath = "/tmp/{$recID}.".self::FORMAT;
+        @unlink($recPath);
+        $command = ['rec'];
+        $command[] = $recPath;
+        $command[] = "rate {$recRate}";
+        $aboveSilence = "1 {$recSilenceTop} {$silencePercent}%";
+        $belowSilence = "1 {$recSilenceBottom} {$silencePercent}%";
+        $command[] = "silence {$aboveSilence} {$belowSilence}";
+        $execCommand = implode(' ', $command);
+        $this->rec(" rec: {$execCommand}");
+
+        $recStart = microtime(true);
+        $output = [];
+        exec($execCommand, $output);
+        $recElapsed = microtime(true) - $recStart;
+        $recSec = round($recElapsed, 3);
+        $this->rec(" recorded for {$recSec} sec");
+
+        exec("play {$recPath}");
+
+        $this->listening = false;
+
+        // Send uncue to ALICE
+        $this->sendMessage('event', [
+            'type' => 'uncue'
+        ]);
+
+        $this->queue('recognize', [
+            'path' => $recPath
+        ]);
+    }
+
+    /**
+     * Recognize audio
+     *
+     * @param array $payload
+     */
+    public function action_recognize($payload) {
+        // Recognize audio
+        $recPath = $payload['path'];
+        //@unlink($recPath);
+
+        $watson = new API\Watson();
+        $output = $watson->recognize($recPath, self::MIMETYPE);
+
+        $results = val('results', $output);
+        if (!count($results)) {
+            $this->queue('command', [
+                'phrase' => null
+            ]);
+        }
+
+        $index = val('result_index', $output);
+        $result = $results[$index];
+        $final = valr('alternatives.0', $result);
+
+        $transcript = $final['transcript'];
+        $confidence = $final['confidence'];
+        $confidencePercent = round($confidence * 100,0);
+
+        $this->rec("recognized ({$confidencePercent}%): {$transcript}");
+
+        $this->queue('command', [
+            'phrase' => $transcript,
+            'confidence' => $confidence
+        ]);
+    }
+
+    /**
+     * Send recognized phrase to ALICE
+     *
+     * @param array $payload
+     */
+    public function action_command($payload) {
+        $phrase = $payload['phrase'];
 
         // Send STT result
         if ($phrase) {
+            $confidence = val('confidence', $payload, 0);
             $this->sendMessage('event', [
                 'type' => 'command',
-                'phrase' => 'test phrase'
+                'phrase' => $phrase,
+                'confidence' => $confidence
             ]);
         } else {
             $this->sendMessage('event', [
@@ -246,8 +390,6 @@ class AudioClient extends SocketClient {
                 'phrase' => null
             ]);
         }
-
-        $this->listening = false;
     }
 
 }
