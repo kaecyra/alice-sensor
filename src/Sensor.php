@@ -85,6 +85,9 @@ class Sensor implements App {
     public static function commands($cli) {
         $cli->command('start')
             ->opt('id', "Sensor ID", true, 'string');
+
+        $cli->command('restart')
+            ->opt('id', "Sensor ID", true, 'string');
     }
 
     /**
@@ -103,6 +106,15 @@ class Sensor implements App {
      */
     public static function loop() {
         return self::$loop;
+    }
+
+    /**
+     * Get config reference
+     *
+     * @return \Alice\Common\Config
+     */
+    public function config() {
+        return $this->config;
     }
 
     /**
@@ -165,10 +177,16 @@ class Sensor implements App {
     }
 
     /**
+     * Daemon shutting down
      *
-     * @return \Alice\Common\Config
      */
-    public function config() {
-        return $this->config;
+    public function shutdown() {
+        rec(' shutting down');
+
+        // Gracefully shutdown client
+        if (is_callable([$this->client, 'shutdown'])) {
+            $this->client->shutdown();
+        }
     }
+
 }
